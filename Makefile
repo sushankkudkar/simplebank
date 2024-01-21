@@ -22,4 +22,7 @@ sqlc:
 lint:
 	golint ./...
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc lint
+server:
+	go run main.go
+
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc lint server
