@@ -8,30 +8,28 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// // Store defines all functions to execute db queries and transactions
-// type Store interface {
-// 	Querier
-// 	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
-// 	CreateUserTx(ctx context.Context, arg CreateUserTxParams) (CreateUserTxResult, error)
-// 	VerifyEmailTx(ctx context.Context, arg VerifyEmailTxParams) (VerifyEmailTxResult, error)
-// }
+// Store defines all functions to execute db queries and transactions
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+}
 
-// SQLStore provides all functions to execute SQL queries and transactions
-type Store struct {
+// PostgresStore provides all functions to execute SQL queries and transactions
+type PostgresStore struct {
 	connPool *pgxpool.Pool
 	*Queries
 }
 
 // NewStore creates a new store
-func NewStore(connPool *pgxpool.Pool) *Store {
-	return &Store{
+func NewStore(connPool *pgxpool.Pool) PostgresStore {
+	return PostgresStore{
 		connPool: connPool,
 		Queries:  New(connPool),
 	}
 }
 
 // execTx executes a function within a database transaction
-func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (store *PostgresStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.connPool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return err
@@ -65,7 +63,7 @@ type TransferTxResult struct {
 
 // TransferTx performs a transfer from one account to another.
 // It creates a transfer record, adds account entries, and updates account balances within a single database transaction.
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *PostgresStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {
