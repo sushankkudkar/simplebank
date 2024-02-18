@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -36,6 +37,16 @@ func newUserResponse(user db.User) userResponse {
 		PasswordChangedAt: user.PasswordChangedAt,
 		CreatedAt:         user.CreatedAt,
 	}
+}
+
+func (server *Server) listUsers(ctx *gin.Context) {
+	users, err := server.store.ListUsers(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	fmt.Println(users)
+	ctx.JSON(http.StatusOK, users)
 }
 
 func (server *Server) createUser(ctx *gin.Context) {
