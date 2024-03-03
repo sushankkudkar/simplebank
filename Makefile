@@ -1,26 +1,28 @@
+DB_URL=postgresql://root:secret@postgres:5432/simple_bank?sslmode=disable
+
+network:
+	docker network create bank-network
+
 postgres:
-	docker run --name postgres16 --network bank-network -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:16-alpine
+	docker run --name postgres --network bank-network -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:16-alpine
 
 createdb:
-	docker exec -it postgres16 createdb --username=root --owner=root simple_bank
+	docker exec -it postgres createdb --username=root --owner=root simple_bank
 
 dropdb:
-	docker exec -it postgres16 dropdb simple_bank
+	docker exec -it postgres dropdb simple_bank
 
-migrateup: 
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
+migrateup:
+	migrate -path db/migration -database "$(DB_URL)" -verbose up
 
-migratedown: 
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down
+migrateup1:
+	migrate -path db/migration -database "$(DB_URL)" -verbose up 1
 
-migrateup1: 
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up 1
+migratedown:
+	migrate -path db/migration -database "$(DB_URL)" -verbose down
 
-migratedown1: 
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down 1
-
-test:
-	go test -v -cover ./...
+migratedown1:
+	migrate -path db/migration -database "$(DB_URL)" -verbose down 1
 
 sqlc:
 	sqlc generate
@@ -31,7 +33,4 @@ lint:
 server:
 	go run main.go
 
-mock:
-	mockgen -package mockdb -destination db/mock/store.go github.com/sushankkudkar/simplebank/db/sqlc Store
-
-.PHONY: postgres createdb dropdb migrateup1 migratedown1 migrateup migratedown sqlc lint server mock
+.PHONY: network postgres createdb dropdb migrateup1 migratedown1 migrateup migratedown sqlc lint server
